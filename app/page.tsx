@@ -1,71 +1,47 @@
-import Form from "next/form";
-import { PrismaPg } from "@prisma/adapter-pg";
-import { PrismaClient } from "@prisma/client";
+import { redirect } from "next/navigation";
+import { getSession } from "@/app/lib/session";
+import { prisma } from "@/app/lib/db";
+import { logout } from "@/app/actions/auth";
 
-const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL });
-const prisma = new PrismaClient({ adapter });
+export default async function Home() {
+  const session = await getSession();
 
-export default function Home() {
-  // Server Action
-  async function createUser(formData: FormData) {
-    "use server";
+  if (!session) {
+    redirect("/login");
+  }
 
-    const name = formData.get("name");
-    const email = formData.get("email");
+  const user = await prisma.user.findUnique({
+    where: { id: session.userId },
+    select: { id: true, name: true, email: true },
+  });
 
-    try {
-      // ユーザー作成処理
-      await prisma.user.create({
-        data: {
-          name: name as string,
-          email: email as string,
-        },
-      });
-
-      console.log("ユーザー作成に成功しました");
-    } catch (error) {
-      console.error("ユーザー作成に失敗しました, " + error);
-    }
+  if (!user) {
+    redirect("/login");
   }
 
   return (
-    <div className="max-w-md mx-auto mt-10 p-6 bg-white rounded-lg shadow-md">
-      <Form action={createUser} className="space-y-4">
-        <div>
-          <label
-            htmlFor="name"
-            className="block text-sm font-medium text-gray-700"
-          >
-            名前
-          </label>
-          <input
-            type="text"
-            name="name"
-            id="name"
-            className="text-black mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-          />
+    <div className="flex min-h-full items-center justify-center">
+      <div className="w-full max-w-md p-8 bg-white rounded-lg shadow-md">
+        <h1 className="text-2xl font-bold text-gray-900 mb-6">トップページ</h1>
+
+        <div className="space-y-3">
+          <p className="text-gray-700">
+            <span className="font-medium">名前:</span> {user.name}
+          </p>
+          <p className="text-gray-700">
+            <span className="font-medium">メール:</span> {user.email}
+          </p>
         </div>
-        <div>
-          <label
-            htmlFor="email"
-            className="block text-sm font-medium text-gray-700"
+
+        <form action={logout} className="mt-6">
+          <button
+            type="submit"
+            className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
           >
-            メールアドレス
-          </label>
-          <input
-            type="email"
-            name="email"
-            id="email"
-            className="text-black mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-          />
-        </div>
-        <button
-          type="submit"
-          className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-        >
-          ユーザーを作成
-        </button>
-      </Form>
+            ログアウト
+          </button>
+        </form>
+      </div>
     </div>
   );
 }
