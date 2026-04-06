@@ -99,6 +99,7 @@ export default function LoginPage() {
                 name="password"
                 id="password"
                 required
+                autoComplete={isSignup ? "new-password" : "current-password"}
                 className="block w-full px-3.5 py-2.5 bg-[#f9fafb] border border-[#e5e7eb] rounded-lg text-sm text-[#1a1a1a] placeholder-[#c4c4c4] focus:outline-none focus:border-[#9ca3af] transition-colors"
               />
               {errors?.password && (
