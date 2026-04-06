@@ -41,18 +41,21 @@ export async function POST(request: Request) {
   }
   const asin = asinMatch[1];
 
+  // Extract book title from Amazon URL path as a fallback search term
+  const titleFromUrl = extractTitleFromAmazonUrl(resolvedUrl);
+
+  const queries = [
+    `isbn:${asin}`,
+    asin,
+    ...(titleFromUrl ? [titleFromUrl] : []),
+  ];
+
   try {
-    // Try Google Books API with ASIN as ISBN
-    const result = await searchGoogleBooks(`isbn:${asin}`);
-
-    if (result) {
-      return Response.json(result);
-    }
-
-    // Fallback: search by ASIN as a general query
-    const fallback = await searchGoogleBooks(asin);
-    if (fallback) {
-      return Response.json(fallback);
+    for (const query of queries) {
+      const result = await searchGoogleBooksWithRetry(query);
+      if (result) {
+        return Response.json(result);
+      }
     }
 
     return Response.json(
@@ -83,6 +86,32 @@ interface GoogleBooksVolume {
       identifier: string;
     }>;
   };
+}
+
+function extractTitleFromAmazonUrl(url: string): string | null {
+  try {
+    const pathname = new URL(url).pathname;
+    // Amazon URLs: /書籍タイトル/dp/ASIN or /dp/ASIN
+    const segments = pathname.split("/").filter(Boolean);
+    const dpIndex = segments.indexOf("dp");
+    if (dpIndex > 0) {
+      return decodeURIComponent(segments[dpIndex - 1]).replace(/-/g, " ");
+    }
+    return null;
+  } catch {
+    return null;
+  }
+}
+
+async function searchGoogleBooksWithRetry(query: string, retries = 2) {
+  for (let i = 0; i <= retries; i++) {
+    const result = await searchGoogleBooks(query);
+    if (result) return result;
+    if (i < retries) {
+      await new Promise((r) => setTimeout(r, 500 * (i + 1)));
+    }
+  }
+  return null;
 }
 
 async function searchGoogleBooks(query: string) {
