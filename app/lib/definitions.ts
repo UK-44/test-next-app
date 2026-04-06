@@ -61,7 +61,9 @@ export const AmazonUrlSchema = z.object({
           const parsed = new URL(url);
           return (
             parsed.hostname.includes("amazon.co.jp") ||
-            parsed.hostname.includes("amazon.com")
+            parsed.hostname.includes("amazon.com") ||
+            parsed.hostname === "amzn.asia" ||
+            parsed.hostname === "amzn.to"
           );
         } catch {
           return false;
