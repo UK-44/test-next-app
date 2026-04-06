@@ -60,8 +60,6 @@ export async function createBook(state: FormState, formData: FormData): Promise<
     },
   });
 
-  revalidatePath("/books");
-  revalidatePath("/");
   redirect(`/books/${book.id}`);
 }
 
@@ -123,9 +121,6 @@ export async function updateBook(
     data: updateData,
   });
 
-  revalidatePath(`/books/${bookId}`);
-  revalidatePath("/books");
-  revalidatePath("/");
   redirect(`/books/${bookId}`);
 }
 
@@ -151,8 +146,6 @@ export async function updateBookStatus(bookId: string, status: string) {
   });
 
   revalidatePath(`/books/${bookId}`);
-  revalidatePath("/books");
-  revalidatePath("/");
 }
 
 export async function updateBookReview(
@@ -177,7 +170,5 @@ export async function deleteBook(bookId: string) {
     where: { id: bookId, userId: user.id },
   });
 
-  revalidatePath("/books");
-  revalidatePath("/");
   redirect("/books");
 }

@@ -1,7 +1,6 @@
 "use server";
 
 import { redirect } from "next/navigation";
-import { revalidatePath } from "next/cache";
 import { prisma } from "@/app/lib/db";
 import { requireAuth } from "@/app/lib/auth-guard";
 import { NoteFormSchema, FormState } from "@/app/lib/definitions";
@@ -35,12 +34,6 @@ export async function createNote(state: FormState, formData: FormData): Promise<
       importance: data.importance ?? 0,
     },
   });
-
-  revalidatePath("/");
-  revalidatePath("/learn");
-  if (data.bookId) {
-    revalidatePath(`/books/${data.bookId}`);
-  }
 
   // Redirect back to book detail if bookId, otherwise to the new note
   if (data.bookId) {
@@ -88,11 +81,6 @@ export async function updateNote(
     },
   });
 
-  revalidatePath("/");
-  revalidatePath("/learn");
-  revalidatePath(`/notes/${noteId}`);
-  if (data.bookId) revalidatePath(`/books/${data.bookId}`);
-
   redirect("/?tab=memo");
 }
 
@@ -105,10 +93,6 @@ export async function deleteNote(noteId: string) {
   if (!note) return;
 
   await prisma.note.delete({ where: { id: noteId } });
-
-  revalidatePath("/");
-  revalidatePath("/learn");
-  if (note.bookId) revalidatePath(`/books/${note.bookId}`);
 
   redirect("/?tab=memo");
 }
