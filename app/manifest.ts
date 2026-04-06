@@ -2,8 +2,8 @@ import type { MetadataRoute } from "next";
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "Tsundoku",
-    short_name: "Tsundoku",
+    name: "ReadDo",
+    short_name: "ReadDo",
     description: "読書中に浮かんだ思考を逃さず記録する",
     start_url: "/",
     display: "standalone",

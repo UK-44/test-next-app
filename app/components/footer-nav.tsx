@@ -55,7 +55,7 @@ export function FooterNav({ userName }: { userName: string }) {
         {/* Brand */}
         <div className="px-5 pt-6 pb-8">
           <h1 className="font-[family-name:var(--font-noto-serif-jp)] text-lg font-bold text-[#1a1a1a] tracking-tight">
-            Tsundoku
+            ReadDo
           </h1>
         </div>
 

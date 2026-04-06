@@ -28,7 +28,7 @@ export default function LoginPage() {
       {/* Brand */}
       <div className="mb-10 text-center">
         <h1 className="font-[family-name:var(--font-noto-serif-jp)] text-3xl font-bold tracking-tight text-[#1a1a1a]">
-          Tsundoku
+          ReadDo
         </h1>
         <p className="mt-2 text-[13px] text-[#9ca3af] tracking-wide">
           読書中に浮かんだ思考を逃さず記録する

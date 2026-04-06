@@ -17,12 +17,12 @@ const notoSerifJP = Noto_Serif_JP({
 });
 
 export const metadata: Metadata = {
-  title: "Tsundoku",
+  title: "ReadDo",
   description: "読書中に浮かんだ思考を逃さず記録する",
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
-    title: "Tsundoku",
+    title: "ReadDo",
   },
 };
 
