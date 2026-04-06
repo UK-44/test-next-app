@@ -24,77 +24,98 @@ export default async function HomePage({
   const importanceFilter = importance ? parseInt(importance, 10) : undefined;
   const sortBy = sort === "importance" ? "importance" : "newest";
 
-  const [notes, books] = await Promise.all([
-    prisma.note.findMany({
-      where: {
-        userId: user.id,
-        ...(bookId ? { bookId } : {}),
-        ...(importanceFilter ? { importance: importanceFilter } : {}),
-        ...(searchQuery
-          ? {
-              OR: [
-                { body: { contains: searchQuery, mode: "insensitive" as const } },
-                { quoteText: { contains: searchQuery, mode: "insensitive" as const } },
-                { book: { title: { contains: searchQuery, mode: "insensitive" as const } } },
-              ],
-            }
-          : {}),
-      },
-      orderBy: sortBy === "importance"
-        ? [{ importance: "desc" }, { createdAt: "desc" }]
-        : { createdAt: "desc" },
-      take: 50,
-      include: {
-        book: { select: { id: true, title: true, author: true } },
-      },
-    }),
-    prisma.book.findMany({
-      where: {
-        userId: user.id,
-        ...(status && ["WANT_TO_READ", "READING", "FINISHED"].includes(status)
-          ? { status: status as "WANT_TO_READ" | "READING" | "FINISHED" }
-          : {}),
-        ...(searchQuery
-          ? {
-              OR: [
-                { title: { contains: searchQuery, mode: "insensitive" as const } },
-                { author: { contains: searchQuery, mode: "insensitive" as const } },
-              ],
-            }
-          : {}),
-      },
-      orderBy: bookSort === "memos"
-        ? { notes: { _count: "desc" } }
-        : bookSort === "added"
-          ? { createdAt: "desc" }
-          : { updatedAt: "desc" },
-      include: {
-        _count: { select: { notes: true } },
-      },
-    }),
+  // Only fetch data needed for the active tab
+  const notesPromise =
+    activeTab === "memo"
+      ? prisma.note.findMany({
+          where: {
+            userId: user.id,
+            ...(bookId ? { bookId } : {}),
+            ...(importanceFilter ? { importance: importanceFilter } : {}),
+            ...(searchQuery
+              ? {
+                  OR: [
+                    { body: { contains: searchQuery, mode: "insensitive" as const } },
+                    { quoteText: { contains: searchQuery, mode: "insensitive" as const } },
+                    { book: { title: { contains: searchQuery, mode: "insensitive" as const } } },
+                  ],
+                }
+              : {}),
+          },
+          orderBy:
+            sortBy === "importance"
+              ? [{ importance: "desc" }, { createdAt: "desc" }]
+              : { createdAt: "desc" },
+          take: 50,
+          include: {
+            book: { select: { id: true, title: true, author: true } },
+          },
+        })
+      : Promise.resolve([]);
+
+  const booksPromise =
+    activeTab === "books"
+      ? prisma.book.findMany({
+          where: {
+            userId: user.id,
+            ...(status && ["WANT_TO_READ", "READING", "FINISHED"].includes(status)
+              ? { status: status as "WANT_TO_READ" | "READING" | "FINISHED" }
+              : {}),
+            ...(searchQuery
+              ? {
+                  OR: [
+                    { title: { contains: searchQuery, mode: "insensitive" as const } },
+                    { author: { contains: searchQuery, mode: "insensitive" as const } },
+                  ],
+                }
+              : {}),
+          },
+          orderBy:
+            bookSort === "memos"
+              ? { notes: { _count: "desc" } }
+              : bookSort === "added"
+                ? { createdAt: "desc" }
+                : { updatedAt: "desc" },
+          include: {
+            _count: { select: { notes: true } },
+          },
+        })
+      : Promise.resolve([]);
+
+  const actionNotesPromise =
+    activeTab === "action"
+      ? prisma.note.findMany({
+          where: {
+            userId: user.id,
+            actionItems: { not: "" },
+          },
+          orderBy: { createdAt: "desc" },
+          select: {
+            id: true,
+            body: true,
+            quoteText: true,
+            actionItems: true,
+            createdAt: true,
+            book: { select: { title: true } },
+          },
+        })
+      : Promise.resolve([]);
+
+  const allBooksPromise =
+    activeTab === "memo"
+      ? prisma.book.findMany({
+          where: { userId: user.id },
+          orderBy: { title: "asc" },
+          select: { id: true, title: true },
+        })
+      : Promise.resolve([]);
+
+  const [notes, books, actionNotes, allBooks] = await Promise.all([
+    notesPromise,
+    booksPromise,
+    actionNotesPromise,
+    allBooksPromise,
   ]);
-
-  const actionNotes = await prisma.note.findMany({
-    where: {
-      userId: user.id,
-      actionItems: { not: "" },
-    },
-    orderBy: { createdAt: "desc" },
-    select: {
-      id: true,
-      body: true,
-      quoteText: true,
-      actionItems: true,
-      createdAt: true,
-      book: { select: { title: true } },
-    },
-  });
-
-  const allBooks = await prisma.book.findMany({
-    where: { userId: user.id },
-    orderBy: { title: "asc" },
-    select: { id: true, title: true },
-  });
 
   return (
     <MainTabs
