@@ -122,7 +122,7 @@ export function NoteDetailView({
         {/* Quote */}
         {note.quoteText && (
           <section>
-            <blockquote className="font-[family-name:var(--font-noto-serif-jp)] text-[15px] text-[#4a4540] leading-[2] pl-4 border-l-2 border-[#e5e7eb] italic">
+            <blockquote className="font-[family-name:var(--font-noto-serif-jp)] text-[15px] text-[#4a4540] leading-[2] pl-4 border-l-2 border-[#e5e7eb] italic whitespace-pre-wrap">
               {note.quoteText}
             </blockquote>
           </section>
@@ -140,7 +140,7 @@ export function NoteDetailView({
         {note.actionItems && (
           <section className="bg-[#fefce8] rounded-xl p-4">
             <p className="text-[10px] font-semibold text-[#d4a017] uppercase tracking-[0.1em] mb-2">Next Action</p>
-            <p className="text-[14px] text-[#1a1a1a] leading-[1.9]">
+            <p className="text-[14px] text-[#1a1a1a] leading-[1.9] whitespace-pre-wrap">
               {note.actionItems}
             </p>
           </section>
