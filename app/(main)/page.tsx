@@ -90,13 +90,8 @@ export default async function HomePage({
             actionItems: { not: "" },
           },
           orderBy: { createdAt: "desc" },
-          select: {
-            id: true,
-            body: true,
-            quoteText: true,
-            actionItems: true,
-            createdAt: true,
-            book: { select: { title: true } },
+          include: {
+            book: { select: { id: true, title: true, author: true } },
           },
         })
       : Promise.resolve([]);
@@ -133,12 +128,14 @@ export default async function HomePage({
       actionItems={actionNotes
         .filter((n: typeof actionNotes[number]) => n.actionItems)
         .map((n: typeof actionNotes[number]) => ({
-          noteId: n.id,
+          id: n.id,
           body: n.body,
           quoteText: n.quoteText,
-          actionItems: n.actionItems!,
-          bookTitle: n.book?.title ?? null,
+          locationInfo: n.locationInfo,
+          actionItems: n.actionItems,
+          importance: n.importance,
           createdAt: n.createdAt.toISOString(),
+          book: n.book,
         }))}
       books={books.map((b) => ({
         id: b.id,

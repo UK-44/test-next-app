@@ -37,10 +37,13 @@ export function FooterNav({ userName }: { userName: string }) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const pathname = usePathname();
-  const activeTab = searchParams.get("tab") || "memo";
+  const activeTab = pathname.startsWith("/books/")
+    ? "books"
+    : (searchParams.get("tab") || "memo");
   const isSettings = pathname === "/settings";
 
   function switchTab(tab: string) {
+    window.dispatchEvent(new CustomEvent("closeDetail"));
     router.push(`/?tab=${tab}`);
   }
 

@@ -1,16 +1,29 @@
 "use client";
 
-import { useActionState, useState } from "react";
+import { useActionState, useState, useRef, useEffect } from "react";
 import { createBook } from "@/app/actions/books";
 
 const inputClass =
   "text-[#2c2416] mt-1 block w-full px-0 py-2 bg-transparent border-b border-[#e5e7eb] placeholder-[#b5a898] focus:outline-none focus:border-[#6b5d4d] sm:text-sm transition-colors";
 
+interface BookResult {
+  title: string;
+  author: string;
+  coverImageUrl: string | null;
+  identifier: string;
+  publisher: string;
+  publishedAt: string;
+  description: string;
+}
+
 export function BookForm() {
   const [state, action, pending] = useActionState(createBook, undefined);
-  const [fetching, setFetching] = useState(false);
-  const [amazonUrl, setAmazonUrl] = useState("");
-  const [fetchError, setFetchError] = useState("");
+  const [searching, setSearching] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchError, setSearchError] = useState("");
+  const [searchResults, setSearchResults] = useState<BookResult[]>([]);
+  const [showDialog, setShowDialog] = useState(false);
+  const dialogRef = useRef<HTMLDialogElement>(null);
 
   const [title, setTitle] = useState("");
   const [author, setAuthor] = useState("");
@@ -24,66 +37,127 @@ export function BookForm() {
     | Record<string, string[] | undefined>
     | undefined;
 
-  async function handleAmazonFetch() {
-    if (!amazonUrl.trim()) return;
-    setFetching(true);
-    setFetchError("");
+  useEffect(() => {
+    if (showDialog) {
+      dialogRef.current?.showModal();
+    } else {
+      dialogRef.current?.close();
+    }
+  }, [showDialog]);
+
+  async function handleSearch() {
+    if (!searchQuery.trim()) return;
+    setSearching(true);
+    setSearchError("");
 
     try {
-      const res = await fetch("/api/amazon-scrape", {
+      const res = await fetch("/api/book-search", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ url: amazonUrl }),
+        body: JSON.stringify({ query: searchQuery }),
       });
 
       const data = await res.json();
       if (!res.ok) {
-        setFetchError(data.error || "取得に失敗しました。");
+        setSearchError(data.error || "検索に失敗しました。");
         return;
       }
 
-      if (data.title) setTitle(data.title);
-      if (data.author) setAuthor(data.author);
-      if (data.coverImageUrl) setCoverImageUrl(data.coverImageUrl);
-      if (data.identifier) setIdentifier(data.identifier);
-      if (data.publisher) setPublisher(data.publisher);
-      if (data.publishedAt) setPublishedAt(data.publishedAt);
-      if (data.description) setDescription(data.description);
+      if (data.results.length === 0) {
+        setSearchError("書籍が見つかりませんでした。");
+        return;
+      }
+
+      setSearchResults(data.results);
+      setShowDialog(true);
     } catch {
-      setFetchError("取得に失敗しました。手動で入力してください。");
+      setSearchError("検索に失敗しました。手動で入力してください。");
     } finally {
-      setFetching(false);
+      setSearching(false);
     }
+  }
+
+  function handleSelect(book: BookResult) {
+    setTitle(book.title);
+    setAuthor(book.author);
+    setCoverImageUrl(book.coverImageUrl ?? "");
+    setIdentifier(book.identifier);
+    setPublisher(book.publisher);
+    setPublishedAt(book.publishedAt);
+    setDescription(book.description);
+    setShowDialog(false);
   }
 
   return (
     <div className="max-w-lg mx-auto">
-      {/* Amazon URL section */}
+      {/* Book search section */}
       <div className="mb-6 p-4 bg-[#ebe3d5] rounded border border-[#e5e7eb]">
         <label className="block text-xs text-[#8c7e6a] tracking-widest mb-2">
-          AmazonのURLから登録
+          書籍タイトルで検索
         </label>
         <div className="flex gap-2">
           <input
-            type="url"
-            value={amazonUrl}
-            onChange={(e) => setAmazonUrl(e.target.value)}
-            placeholder="https://www.amazon.co.jp/dp/..."
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="書籍タイトルを入力..."
             className="flex-1 px-3 py-2 bg-transparent border-b border-[#e5e7eb] text-sm text-[#2c2416] placeholder-[#b5a898] focus:outline-none focus:border-[#6b5d4d]"
           />
           <button
             type="button"
-            onClick={handleAmazonFetch}
-            disabled={fetching || !amazonUrl.trim()}
+            onClick={handleSearch}
+            disabled={searching || !searchQuery.trim()}
             className="px-4 py-2 bg-[#2c2416] text-[#f5f0e8] text-sm rounded hover:bg-[#3d3225] disabled:opacity-50 whitespace-nowrap"
           >
-            {fetching ? "取得中..." : "取得"}
+            {searching ? "検索中..." : "検索"}
           </button>
         </div>
-        {fetchError && (
-          <p className="mt-2 text-sm text-red-600">{fetchError}</p>
+        {searchError && (
+          <p className="mt-2 text-sm text-red-600">{searchError}</p>
         )}
       </div>
+
+      {/* Search results dialog */}
+      <dialog
+        ref={dialogRef}
+        onClose={() => setShowDialog(false)}
+        className="w-full max-w-md rounded-lg bg-[#f5f0e8] p-0 shadow-xl backdrop:bg-black/40"
+      >
+        <div className="p-4">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-sm font-medium text-[#2c2416] tracking-widest">
+              検索結果
+            </h2>
+            <button
+              type="button"
+              onClick={() => setShowDialog(false)}
+              className="text-[#8c7e6a] hover:text-[#2c2416] text-lg leading-none"
+            >
+              ✕
+            </button>
+          </div>
+          <ul className="space-y-1 max-h-80 overflow-y-auto">
+            {searchResults.map((book, i) => (
+              <li key={i}>
+                <button
+                  type="button"
+                  onClick={() => handleSelect(book)}
+                  className="w-full text-left px-3 py-2.5 rounded hover:bg-[#ebe3d5] transition-colors"
+                >
+                  <p className="text-sm font-medium text-[#2c2416] leading-snug">
+                    {book.title}
+                  </p>
+                  {book.author && (
+                    <p className="text-xs text-[#8c7e6a] mt-0.5">
+                      {book.author}
+                    </p>
+                  )}
+                </button>
+              </li>
+            ))}
+          </ul>
+        </div>
+      </dialog>
 
       <div className="relative mb-6">
         <div className="absolute inset-0 flex items-center">

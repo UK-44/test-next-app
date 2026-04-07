@@ -54,7 +54,7 @@ export function NoteForm({
         <textarea
           name="quoteText"
           id="quoteText"
-          rows={2}
+          rows={4}
           autoFocus
           placeholder="印象に残った一文..."
           className={inputClass + " resize-none"}
@@ -98,7 +98,7 @@ export function NoteForm({
         <textarea
           name="actionItems"
           id="actionItems"
-          rows={2}
+          rows={4}
           placeholder="この学びから試したいこと..."
           className={inputClass + " resize-none"}
         />

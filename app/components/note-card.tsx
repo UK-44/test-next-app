@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { deleteNote } from "@/app/actions/notes";
 
 export type NoteCardItem = {
@@ -138,9 +138,9 @@ export function NoteDetailView({
 
         {/* Action items */}
         {note.actionItems && (
-          <section>
+          <section className="bg-[#fefce8] rounded-xl p-4">
             <p className="text-[10px] font-semibold text-[#d4a017] uppercase tracking-[0.1em] mb-2">Next Action</p>
-            <p className="text-[14px] text-[#3d3729] leading-[1.9]">
+            <p className="text-[14px] text-[#1a1a1a] leading-[1.9]">
               {note.actionItems}
             </p>
           </section>
@@ -181,6 +181,18 @@ export function NoteList({
   const [selectedNote, setSelectedNote] = useState<NoteCardItem | null>(null);
   const [isSliding, setIsSliding] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function handleCloseDetail() {
+      if (isSliding) {
+        setIsSliding(false);
+        onDetailOpen?.(false);
+        setTimeout(() => setSelectedNote(null), 300);
+      }
+    }
+    window.addEventListener("closeDetail", handleCloseDetail);
+    return () => window.removeEventListener("closeDetail", handleCloseDetail);
+  }, [isSliding, onDetailOpen]);
 
   function handleSelect(note: NoteCardItem) {
     setSelectedNote(note);

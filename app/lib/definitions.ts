@@ -51,27 +51,6 @@ export const BookFormSchema = z.object({
   shortReview: z.string().trim().optional().or(z.literal("")),
 });
 
-export const AmazonUrlSchema = z.object({
-  url: z
-    .string()
-    .url({ message: "有効なURLを入力してください。" })
-    .refine(
-      (url) => {
-        try {
-          const parsed = new URL(url);
-          return (
-            parsed.hostname.includes("amazon.co.jp") ||
-            parsed.hostname.includes("amazon.com") ||
-            parsed.hostname === "amzn.asia" ||
-            parsed.hostname === "amzn.to"
-          );
-        } catch {
-          return false;
-        }
-      },
-      { message: "AmazonのURLを入力してください。" }
-    ),
-});
 
 // --- Note schemas ---
 

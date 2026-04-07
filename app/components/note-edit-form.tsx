@@ -63,7 +63,7 @@ export function NoteEditForm({
           <textarea
             name="quoteText"
             id="quoteText"
-            rows={2}
+            rows={4}
             defaultValue={note.quoteText ?? ""}
             className={inputClass + " resize-none"}
           />
@@ -106,7 +106,7 @@ export function NoteEditForm({
           <textarea
             name="actionItems"
             id="actionItems"
-            rows={2}
+            rows={4}
             defaultValue={note.actionItems ?? ""}
             placeholder="この学びから試したいこと..."
             className={inputClass + " resize-none"}
