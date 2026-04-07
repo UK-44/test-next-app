@@ -66,10 +66,12 @@ export function NoteForm({
           ページ
         </label>
         <input
-          type="text"
+          type="number"
           name="locationInfo"
           id="locationInfo"
-          placeholder="p.42, 第3章"
+          placeholder="100"
+          min="0"
+          inputMode="numeric"
           className={inputClass}
         />
       </div>

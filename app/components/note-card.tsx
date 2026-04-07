@@ -38,7 +38,7 @@ function NoteCard({
         )}
         {note.locationInfo && (
           <span className="ml-auto text-[10px] text-[#9ca3af]">
-            {note.locationInfo}
+            P{note.locationInfo}
           </span>
         )}
       </div>
@@ -113,7 +113,7 @@ export function NoteDetailView({
           </p>
         )}
         {note.locationInfo && (
-          <p className="text-[12px] text-[#9ca3af] mt-0.5">{note.locationInfo}</p>
+          <p className="text-[12px] text-[#9ca3af] mt-0.5">P{note.locationInfo}</p>
         )}
       </div>
 

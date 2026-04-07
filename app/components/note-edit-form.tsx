@@ -74,9 +74,11 @@ export function NoteEditForm({
             ページ
           </label>
           <input
-            type="text"
+            type="number"
             name="locationInfo"
             id="locationInfo"
+            min="0"
+            inputMode="numeric"
             defaultValue={note.locationInfo ?? ""}
             className={inputClass}
           />
