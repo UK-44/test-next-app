@@ -250,7 +250,6 @@ function SearchFilterDialog({
               onKeyDown={(e) => { if (e.key === "Enter") handleApply(); }}
               placeholder={activeTab === "memo" ? "メモ・引用・本名で検索" : "タイトル・著者で検索"}
               className="flex-1 bg-transparent text-sm text-[#1a1a1a] placeholder-[#9ca3af] outline-none"
-              autoFocus
             />
             {query && (
               <button onClick={() => setQuery("")} className="text-[#9ca3af]">
