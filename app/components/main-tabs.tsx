@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { NoteList, NoteDetailView, type NoteCardItem } from "@/app/components/note-card";
 
@@ -399,8 +399,25 @@ function SearchFilterDialog({
 }
 
 function ActionList({ items, onDetailOpen }: { items: NoteCardItem[]; onDetailOpen?: (open: boolean) => void }) {
+  const searchParams = useSearchParams();
   const [selectedNote, setSelectedNote] = useState<NoteCardItem | null>(null);
   const [isSliding, setIsSliding] = useState(false);
+  const [skipTransition, setSkipTransition] = useState(false);
+
+  // Auto-open note detail when returning from edit page (no animation)
+  useEffect(() => {
+    const openNoteId = searchParams.get("openNote");
+    if (openNoteId) {
+      const note = items.find((n) => n.id === openNoteId);
+      if (note) {
+        setSkipTransition(true);
+        setSelectedNote(note);
+        setIsSliding(true);
+        onDetailOpen?.(true);
+        requestAnimationFrame(() => setSkipTransition(false));
+      }
+    }
+  }, [searchParams, items, onDetailOpen]);
 
   useEffect(() => {
     function handleCloseDetail() {
@@ -430,11 +447,11 @@ function ActionList({ items, onDetailOpen }: { items: NoteCardItem[]; onDetailOp
   return (
     <div className="overflow-hidden">
       <div
-        className="flex transition-transform duration-300 ease-in-out items-start"
+        className={`flex items-start ${skipTransition ? "" : "transition-transform duration-300 ease-in-out"}`}
         style={{ transform: isSliding ? "translateX(-100%)" : "translateX(0)" }}
       >
         {/* Panel 1: List */}
-        <div className={`w-full flex-shrink-0 transition-[max-height,opacity] duration-300 ${isSliding ? "max-h-0 overflow-hidden opacity-0" : "max-h-none opacity-100"}`}>
+        <div className={`w-full flex-shrink-0 ${skipTransition ? "" : "transition-[max-height,opacity] duration-300"} ${isSliding ? "max-h-0 overflow-hidden opacity-0" : "max-h-none opacity-100"}`}>
           <p className="text-xs text-[#9ca3af] mb-4">{items.length}件</p>
 
           {items.length === 0 ? (
@@ -469,7 +486,7 @@ function ActionList({ items, onDetailOpen }: { items: NoteCardItem[]; onDetailOp
         {/* Panel 2: Detail */}
         <div className="w-full flex-shrink-0">
           {selectedNote && (
-            <NoteDetailView note={selectedNote} onBack={handleBack} />
+            <NoteDetailView note={selectedNote} onBack={handleBack} from="action" />
           )}
         </div>
       </div>

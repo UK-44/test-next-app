@@ -1,6 +1,6 @@
 "use client";
 
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { deleteNote } from "@/app/actions/notes";
 
@@ -65,9 +65,11 @@ function NoteCard({
 export function NoteDetailView({
   note,
   onBack,
+  from,
 }: {
   note: NoteCardItem;
   onBack: () => void;
+  from?: string;
 }) {
   const router = useRouter();
   const [deleting, setDeleting] = useState(false);
@@ -150,7 +152,7 @@ export function NoteDetailView({
       {/* Actions */}
       <div className="flex gap-3 mt-8 pt-6 border-t border-[#f0f0f0]">
         <button
-          onClick={() => router.push(`/notes/${note.id}`)}
+          onClick={() => router.push(`/notes/${note.id}${from ? `?from=${from}` : ""}`)}
           className="flex-1 py-2.5 text-[13px] font-medium text-white bg-[#1a1a1a] rounded-xl hover:bg-[#374151] transition-colors"
         >
           編集する
@@ -178,9 +180,26 @@ export function NoteList({
   showCount?: boolean;
   onDetailOpen?: (open: boolean) => void;
 }) {
+  const searchParams = useSearchParams();
   const [selectedNote, setSelectedNote] = useState<NoteCardItem | null>(null);
   const [isSliding, setIsSliding] = useState(false);
+  const [skipTransition, setSkipTransition] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
+
+  // Auto-open note detail when returning from edit page (no animation)
+  useEffect(() => {
+    const openNoteId = searchParams.get("openNote");
+    if (openNoteId) {
+      const note = notes.find((n) => n.id === openNoteId);
+      if (note) {
+        setSkipTransition(true);
+        setSelectedNote(note);
+        setIsSliding(true);
+        onDetailOpen?.(true);
+        requestAnimationFrame(() => setSkipTransition(false));
+      }
+    }
+  }, [searchParams, notes, onDetailOpen]);
 
   useEffect(() => {
     function handleCloseDetail() {
@@ -210,11 +229,11 @@ export function NoteList({
   return (
     <div ref={containerRef} className="overflow-hidden">
       <div
-        className="flex transition-transform duration-300 ease-in-out items-start"
+        className={`flex items-start ${skipTransition ? "" : "transition-transform duration-300 ease-in-out"}`}
         style={{ transform: isSliding ? "translateX(-100%)" : "translateX(0)" }}
       >
         {/* Panel 1: List — collapse height when detail is shown */}
-        <div className={`w-full flex-shrink-0 transition-[max-height,opacity] duration-300 ${isSliding ? "max-h-0 overflow-hidden opacity-0" : "max-h-none opacity-100"}`}>
+        <div className={`w-full flex-shrink-0 ${skipTransition ? "" : "transition-[max-height,opacity] duration-300"} ${isSliding ? "max-h-0 overflow-hidden opacity-0" : "max-h-none opacity-100"}`}>
           {showCount && (
             <p className="text-xs text-[#9ca3af] mb-4">{notes.length}件</p>
           )}
@@ -235,7 +254,7 @@ export function NoteList({
         {/* Panel 2: Detail */}
         <div className="w-full flex-shrink-0">
           {selectedNote && (
-            <NoteDetailView note={selectedNote} onBack={handleBack} />
+            <NoteDetailView note={selectedNote} onBack={handleBack} from="memo" />
           )}
         </div>
       </div>

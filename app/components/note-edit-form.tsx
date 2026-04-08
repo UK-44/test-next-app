@@ -1,6 +1,7 @@
 "use client";
 
-import { useActionState, useState } from "react";
+import { useActionState, useEffect, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { updateNote } from "@/app/actions/notes";
 
 type BookOption = { id: string; title: string };
@@ -25,9 +26,25 @@ export function NoteEditForm({
   note: NoteData;
   books: BookOption[];
 }) {
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const updateWithId = updateNote.bind(null, note.id);
   const [state, action, pending] = useActionState(updateWithId, undefined);
   const [importance, setImportance] = useState(note.importance);
+
+  useEffect(() => {
+    if (state?.success) {
+      const from = searchParams.get("from");
+      if (from?.startsWith("book-")) {
+        const bookId = from.slice(5);
+        router.push(`/books/${bookId}?openNote=${note.id}`);
+      } else if (from === "memo" || from === "action") {
+        router.push(`/?tab=${from}&openNote=${note.id}`);
+      } else {
+        router.push("/?tab=memo");
+      }
+    }
+  }, [state, router, searchParams, note.id]);
 
   const errors = state?.errors as
     | Record<string, string[] | undefined>

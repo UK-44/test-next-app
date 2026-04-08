@@ -69,7 +69,7 @@ export async function updateNote(
 
   const data = validatedFields.data;
 
-  const updated = await prisma.note.update({
+  await prisma.note.update({
     where: { id: noteId },
     data: {
       bookId: data.bookId || null,
@@ -81,10 +81,7 @@ export async function updateNote(
     },
   });
 
-  if (updated.bookId) {
-    redirect(`/books/${updated.bookId}`);
-  }
-  redirect("/?tab=memo");
+  return { success: true };
 }
 
 export async function deleteNote(noteId: string) {

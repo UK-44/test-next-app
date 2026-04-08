@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { BookStatusSelect } from "@/app/components/book-status-select";
 import { DeleteBookButton } from "@/app/components/delete-book-button";
 import { NoteDetailView } from "@/app/components/note-card";
@@ -73,8 +74,23 @@ export function BookDetailContent({
   book: BookData;
   notes: NoteCardItem[];
 }) {
+  const searchParams = useSearchParams();
   const [selectedNote, setSelectedNote] = useState<NoteCardItem | null>(null);
   const [isSliding, setIsSliding] = useState(false);
+  const [skipTransition, setSkipTransition] = useState(false);
+
+  useEffect(() => {
+    const openNoteId = searchParams.get("openNote");
+    if (openNoteId) {
+      const note = notes.find((n) => n.id === openNoteId);
+      if (note) {
+        setSkipTransition(true);
+        setSelectedNote(note);
+        setIsSliding(true);
+        requestAnimationFrame(() => setSkipTransition(false));
+      }
+    }
+  }, [searchParams, notes]);
 
   function handleSelect(note: NoteCardItem) {
     setSelectedNote(note);
@@ -90,11 +106,11 @@ export function BookDetailContent({
   return (
     <div className="overflow-hidden">
       <div
-        className="flex transition-transform duration-300 ease-in-out items-start"
+        className={`flex items-start ${skipTransition ? "" : "transition-transform duration-300 ease-in-out"}`}
         style={{ transform: isSliding ? "translateX(-100%)" : "translateX(0)" }}
       >
         {/* Panel 1: Book detail page */}
-        <div className={`w-full flex-shrink-0 transition-[max-height,opacity] duration-300 ${isSliding ? "max-h-0 overflow-hidden opacity-0" : "max-h-none opacity-100"}`}>
+        <div className={`w-full flex-shrink-0 ${skipTransition ? "" : "transition-[max-height,opacity] duration-300"} ${isSliding ? "max-h-0 overflow-hidden opacity-0" : "max-h-none opacity-100"}`}>
           <div className="max-w-2xl mx-auto">
             {/* Book cover + info */}
             <div className="flex gap-4 mb-5">
@@ -193,7 +209,7 @@ export function BookDetailContent({
         {/* Panel 2: Note detail — full page slide */}
         <div className="w-full flex-shrink-0">
           {selectedNote && (
-            <NoteDetailView note={selectedNote} onBack={handleBack} />
+            <NoteDetailView note={selectedNote} onBack={handleBack} from={`book-${book.id}`} />
           )}
         </div>
       </div>
