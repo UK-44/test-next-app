@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
-import { NoteList, NoteDetailView, type NoteCardItem, actionStatusConfig, type ActionStatus } from "@/app/components/note-card";
+import { NoteList, NoteDetailView, type NoteCardItem, actionStatusConfig } from "@/app/components/note-card";
 
 type BookItem = {
   id: string;
@@ -41,6 +41,9 @@ export function MainTabs({
   currentSort,
   currentBookSort,
   currentQuery,
+  currentActionStatus,
+  currentActionBookId,
+  currentActionImportance,
 }: {
   activeTab: "memo" | "action" | "books";
   notes: NoteCardItem[];
@@ -53,6 +56,9 @@ export function MainTabs({
   currentSort: string;
   currentBookSort: string;
   currentQuery: string;
+  currentActionStatus: string;
+  currentActionBookId: string;
+  currentActionImportance: string;
 }) {
   const router = useRouter();
   const [showSearch, setShowSearch] = useState(false);
@@ -61,7 +67,8 @@ export function MainTabs({
   const hasActiveFilters =
     !!currentQuery ||
     (activeTab === "memo" && (!!currentBookId || !!currentImportance || currentSort === "importance")) ||
-    (activeTab === "books" && (!!currentStatus || !!currentBookSort));
+    (activeTab === "books" && (!!currentStatus || !!currentBookSort)) ||
+    (activeTab === "action" && (!!currentActionStatus || !!currentActionBookId || !!currentActionImportance));
 
   function applyFilters(params: {
     q?: string;
@@ -70,6 +77,9 @@ export function MainTabs({
     sort?: string;
     status?: string;
     bookSort?: string;
+    actionStatus?: string;
+    actionBookId?: string;
+    actionImportance?: string;
   }) {
     const sp = new URLSearchParams();
     sp.set("tab", activeTab);
@@ -81,6 +91,10 @@ export function MainTabs({
     } else if (activeTab === "books") {
       if (params.status) sp.set("status", params.status);
       if (params.bookSort) sp.set("bookSort", params.bookSort);
+    } else if (activeTab === "action") {
+      if (params.actionStatus) sp.set("actionStatus", params.actionStatus);
+      if (params.actionBookId) sp.set("actionBookId", params.actionBookId);
+      if (params.actionImportance) sp.set("actionImportance", params.actionImportance);
     }
     router.push(`/?${sp.toString()}`);
   }
@@ -98,8 +112,8 @@ export function MainTabs({
       )}
 
       {/* Search FAB + Add FAB — hidden during detail view */}
-      <div className={`fixed bottom-20 right-5 z-40 flex flex-col items-center gap-2 transition-opacity duration-200 ${isDetailOpen ? "opacity-0 pointer-events-none" : "opacity-100"}`}>
-        {(activeTab === "memo" || activeTab === "books") && (
+      <div className={`fixed bottom-20 right-5 z-40 flex flex-col-reverse items-center gap-2 transition-opacity duration-200 ${isDetailOpen ? "opacity-0 pointer-events-none" : "opacity-100"}`}>
+        {(activeTab === "memo" || activeTab === "books" || activeTab === "action") && (
           <button
             onClick={() => setShowSearch(true)}
             className="relative w-12 h-12 bg-white text-[#1a1a1a] rounded-full flex items-center justify-center shadow-lg hover:bg-[#f3f4f6] transition-colors border border-[#e5e7eb]"
@@ -147,6 +161,9 @@ export function MainTabs({
           currentSort={currentSort}
           currentStatus={currentStatus}
           currentBookSort={currentBookSort}
+          currentActionStatus={currentActionStatus}
+          currentActionBookId={currentActionBookId}
+          currentActionImportance={currentActionImportance}
           onApply={(params) => {
             setShowSearch(false);
             applyFilters(params);
@@ -167,6 +184,9 @@ function SearchFilterDialog({
   currentSort,
   currentStatus,
   currentBookSort,
+  currentActionStatus,
+  currentActionBookId,
+  currentActionImportance,
   onApply,
   onClose,
 }: {
@@ -178,6 +198,9 @@ function SearchFilterDialog({
   currentSort: string;
   currentStatus: string;
   currentBookSort: string;
+  currentActionStatus: string;
+  currentActionBookId: string;
+  currentActionImportance: string;
   onApply: (params: {
     q?: string;
     bookId?: string;
@@ -185,6 +208,9 @@ function SearchFilterDialog({
     sort?: string;
     status?: string;
     bookSort?: string;
+    actionStatus?: string;
+    actionBookId?: string;
+    actionImportance?: string;
   }) => void;
   onClose: () => void;
 }) {
@@ -194,6 +220,9 @@ function SearchFilterDialog({
   const [selectedSort, setSelectedSort] = useState(currentSort || "newest");
   const [selectedStatus, setSelectedStatus] = useState(currentStatus);
   const [selectedBookSort, setSelectedBookSort] = useState(currentBookSort);
+  const [selectedActionStatus, setSelectedActionStatus] = useState(currentActionStatus);
+  const [selectedActionBookId, setSelectedActionBookId] = useState(currentActionBookId);
+  const [selectedActionImportance, setSelectedActionImportance] = useState(currentActionImportance);
 
   function handleApply() {
     if (activeTab === "memo") {
@@ -202,6 +231,12 @@ function SearchFilterDialog({
         bookId: selectedBookId,
         importance: selectedImportance,
         sort: selectedSort,
+      });
+    } else if (activeTab === "action") {
+      onApply({
+        actionStatus: selectedActionStatus,
+        actionBookId: selectedActionBookId,
+        actionImportance: selectedActionImportance,
       });
     } else {
       onApply({
@@ -219,6 +254,9 @@ function SearchFilterDialog({
     setSelectedSort("newest");
     setSelectedStatus("");
     setSelectedBookSort("");
+    setSelectedActionStatus("");
+    setSelectedActionBookId("");
+    setSelectedActionImportance("");
   }
 
   return (
@@ -229,7 +267,7 @@ function SearchFilterDialog({
           {/* Header */}
           <div className="flex items-center justify-between">
             <h2 className="text-sm font-semibold text-[#1a1a1a]">
-              {activeTab === "memo" ? "メモを検索" : "本を検索"}
+              {activeTab === "memo" ? "メモを検索" : activeTab === "action" ? "アクションを絞り込み" : "本を検索"}
             </h2>
             <button onClick={onClose} className="text-[#9ca3af] hover:text-[#6b7280] p-1">
               <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
@@ -238,27 +276,29 @@ function SearchFilterDialog({
             </button>
           </div>
 
-          {/* Text search */}
-          <div className="flex items-center gap-2 bg-[#f3f4f6] rounded-xl px-3 py-2.5">
-            <svg className="w-4 h-4 text-[#9ca3af] shrink-0" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
-            </svg>
-            <input
-              type="text"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              onKeyDown={(e) => { if (e.key === "Enter") handleApply(); }}
-              placeholder={activeTab === "memo" ? "メモ・引用・本名で検索" : "タイトル・著者で検索"}
-              className="flex-1 bg-transparent text-sm text-[#1a1a1a] placeholder-[#9ca3af] outline-none"
-            />
-            {query && (
-              <button onClick={() => setQuery("")} className="text-[#9ca3af]">
-                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" />
-                </svg>
-              </button>
-            )}
-          </div>
+          {/* Text search (memo/books only) */}
+          {activeTab !== "action" && (
+            <div className="flex items-center gap-2 bg-[#f3f4f6] rounded-xl px-3 py-2.5">
+              <svg className="w-4 h-4 text-[#9ca3af] shrink-0" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
+              </svg>
+              <input
+                type="text"
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                onKeyDown={(e) => { if (e.key === "Enter") handleApply(); }}
+                placeholder={activeTab === "memo" ? "メモ・引用・本名で検索" : "タイトル・著者で検索"}
+                className="flex-1 bg-transparent text-sm text-[#1a1a1a] placeholder-[#9ca3af] outline-none"
+              />
+              {query && (
+                <button onClick={() => setQuery("")} className="text-[#9ca3af]">
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              )}
+            </div>
+          )}
 
           {/* Memo filters */}
           {activeTab === "memo" && (
@@ -377,6 +417,78 @@ function SearchFilterDialog({
             </div>
           )}
 
+          {/* Action filters */}
+          {activeTab === "action" && (
+            <div className="space-y-4">
+              {/* Status filter */}
+              <div>
+                <p className="text-xs text-[#6b7280] mb-1.5 font-medium">ステータス</p>
+                <div className="flex gap-1.5 flex-wrap">
+                  {([
+                    { value: "", label: "すべて" },
+                    { value: "NOT_STARTED", label: "未着手" },
+                    { value: "IN_PROGRESS", label: "実行中" },
+                    { value: "DONE", label: "完了" },
+                  ]).map((s) => (
+                    <button
+                      key={s.value}
+                      onClick={() => setSelectedActionStatus(s.value)}
+                      className={`px-3 py-1.5 text-xs rounded-full transition-colors ${selectedActionStatus === s.value
+                        ? "bg-[#1a1a1a] text-white"
+                        : "text-[#6b7280] bg-[#f3f4f6] hover:bg-[#e5e7eb]"
+                        }`}
+                    >
+                      {s.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Book filter */}
+              <div>
+                <p className="text-xs text-[#6b7280] mb-1.5 font-medium">本</p>
+                <select
+                  value={selectedActionBookId}
+                  onChange={(e) => setSelectedActionBookId(e.target.value)}
+                  className="w-full px-3 py-2 bg-[#f3f4f6] border border-[#e5e7eb] rounded-xl text-sm text-[#1a1a1a] outline-none focus:border-[#9ca3af]"
+                >
+                  <option value="">すべての本</option>
+                  {allBooks.map((book) => (
+                    <option key={book.id} value={book.id}>{book.title}</option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Importance filter */}
+              <div>
+                <p className="text-xs text-[#6b7280] mb-1.5 font-medium">重要度</p>
+                <div className="flex gap-1.5">
+                  <button
+                    onClick={() => setSelectedActionImportance("")}
+                    className={`px-3 py-1.5 text-xs rounded-full transition-colors ${!selectedActionImportance
+                      ? "bg-[#1a1a1a] text-white"
+                      : "text-[#6b7280] bg-[#f3f4f6] hover:bg-[#e5e7eb]"
+                      }`}
+                  >
+                    全て
+                  </button>
+                  {[1, 2, 3].map((star) => (
+                    <button
+                      key={star}
+                      onClick={() => setSelectedActionImportance(String(star))}
+                      className={`px-3 py-1.5 text-xs rounded-full transition-colors ${selectedActionImportance === String(star)
+                        ? "bg-[#1a1a1a] text-white"
+                        : "text-[#6b7280] bg-[#f3f4f6] hover:bg-[#e5e7eb]"
+                        }`}
+                    >
+                      {"★".repeat(star)}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Action buttons */}
           <div className="flex gap-2">
             <button
@@ -403,11 +515,6 @@ function ActionList({ items, onDetailOpen }: { items: NoteCardItem[]; onDetailOp
   const [selectedNote, setSelectedNote] = useState<NoteCardItem | null>(null);
   const [isSliding, setIsSliding] = useState(false);
   const [skipTransition, setSkipTransition] = useState(false);
-  const [statusFilter, setStatusFilter] = useState<ActionStatus | "">("");
-
-  const filteredItems = statusFilter
-    ? items.filter((item) => item.actionStatus === statusFilter)
-    : items;
 
   // Auto-open note detail when returning from edit page (no animation)
   useEffect(() => {
@@ -457,48 +564,23 @@ function ActionList({ items, onDetailOpen }: { items: NoteCardItem[]; onDetailOp
       >
         {/* Panel 1: List */}
         <div className={`w-full flex-shrink-0 ${skipTransition ? "" : "transition-[max-height,opacity] duration-300"} ${isSliding ? "max-h-0 overflow-hidden opacity-0" : "max-h-none opacity-100"}`}>
-          {/* Status filter */}
-          <div className="flex gap-1.5 mb-4 flex-wrap">
-            {([
-              { value: "" as const, label: "すべて" },
-              { value: "NOT_STARTED" as const, label: "未着手" },
-              { value: "IN_PROGRESS" as const, label: "実行中" },
-              { value: "DONE" as const, label: "完了" },
-            ] as const).map((opt) => (
-              <button
-                key={opt.value}
-                onClick={() => setStatusFilter(opt.value)}
-                className={`px-3 py-1.5 text-xs rounded-full transition-colors ${
-                  statusFilter === opt.value
-                    ? "bg-[#1a1a1a] text-white"
-                    : "text-[#6b7280] bg-[#f3f4f6] hover:bg-[#e5e7eb]"
-                }`}
-              >
-                {opt.label}
-              </button>
-            ))}
-          </div>
+          <p className="text-xs text-[#9ca3af] mb-4">{items.length}件</p>
 
-          <p className="text-xs text-[#9ca3af] mb-4">{filteredItems.length}件</p>
-
-          {filteredItems.length === 0 ? (
+          {items.length === 0 ? (
             <p className="text-sm text-[#9ca3af] text-center py-12">
               アクションがありません
             </p>
           ) : (
             <div className="space-y-3">
-              {filteredItems.map((item) => (
+              {items.map((item) => (
                 <button
                   key={item.id}
                   onClick={() => handleSelect(item)}
                   className="block w-full text-left p-4 bg-white border border-[#e5e7eb] rounded-2xl hover:shadow-md transition-all"
                 >
                   <div className="flex items-center gap-1.5 mb-2">
-                    <svg className="w-3.5 h-3.5 text-[#d4a017]" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="m3.75 13.5 10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75Z" />
-                    </svg>
                     {item.actionStatus && actionStatusConfig[item.actionStatus] && (
-                      <span className={`px-2 py-0.5 rounded-full text-[10px] font-medium ${actionStatusConfig[item.actionStatus].class}`}>
+                      <span className={`px-2 py-0.5 rounded-full text-[10px] font-medium whitespace-nowrap ${actionStatusConfig[item.actionStatus].class}`}>
                         {actionStatusConfig[item.actionStatus].label}
                       </span>
                     )}

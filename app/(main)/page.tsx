@@ -13,10 +13,13 @@ export default async function HomePage({
     sort?: string;
     bookSort?: string;
     q?: string;
+    actionStatus?: string;
+    actionBookId?: string;
+    actionImportance?: string;
   }>;
 }) {
   const user = await requireAuth();
-  const { tab, status, bookId, importance, sort, bookSort, q } = await searchParams;
+  const { tab, status, bookId, importance, sort, bookSort, q, actionStatus, actionBookId, actionImportance } = await searchParams;
   const searchQuery = q?.trim() ?? "";
 
   const activeTab = tab === "books" ? "books" : tab === "action" ? "action" : "memo";
@@ -82,12 +85,19 @@ export default async function HomePage({
         })
       : Promise.resolve([]);
 
+  const actionImportanceFilter = actionImportance ? parseInt(actionImportance, 10) : undefined;
+
   const actionNotesPromise =
     activeTab === "action"
       ? prisma.note.findMany({
           where: {
             userId: user.id,
             actionItems: { not: "" },
+            ...(actionStatus && ["NOT_STARTED", "IN_PROGRESS", "DONE"].includes(actionStatus)
+              ? { actionStatus: actionStatus as "NOT_STARTED" | "IN_PROGRESS" | "DONE" }
+              : {}),
+            ...(actionBookId ? { bookId: actionBookId } : {}),
+            ...(actionImportanceFilter ? { importance: actionImportanceFilter } : {}),
           },
           orderBy: { createdAt: "desc" },
           include: {
@@ -97,7 +107,7 @@ export default async function HomePage({
       : Promise.resolve([]);
 
   const allBooksPromise =
-    activeTab === "memo"
+    activeTab === "memo" || activeTab === "action"
       ? prisma.book.findMany({
           where: { userId: user.id },
           orderBy: { title: "asc" },
@@ -154,6 +164,9 @@ export default async function HomePage({
       currentSort={sort ?? ""}
       currentBookSort={bookSort ?? ""}
       currentQuery={searchQuery}
+      currentActionStatus={actionStatus ?? ""}
+      currentActionBookId={actionBookId ?? ""}
+      currentActionImportance={actionImportance ?? ""}
     />
   );
 }
