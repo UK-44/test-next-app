@@ -61,5 +61,6 @@ export const NoteFormSchema = z.object({
   quoteText: z.string().optional().or(z.literal("")),
   locationInfo: z.string().optional().or(z.literal("")),
   actionItems: z.string().optional().or(z.literal("")),
+  actionStatus: z.enum(["NOT_STARTED", "IN_PROGRESS", "DONE"]).default("NOT_STARTED"),
   importance: z.coerce.number().int().min(0).max(3).optional().default(0),
 });

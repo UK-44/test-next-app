@@ -4,12 +4,21 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { deleteNote } from "@/app/actions/notes";
 
+export type ActionStatus = "NOT_STARTED" | "IN_PROGRESS" | "DONE";
+
+export const actionStatusConfig: Record<ActionStatus, { label: string; class: string }> = {
+  NOT_STARTED: { label: "未着手", class: "bg-[#f3f4f6] text-[#6b7280]" },
+  IN_PROGRESS: { label: "実行中", class: "bg-[#fef3c7] text-[#b45309]" },
+  DONE: { label: "完了", class: "bg-[#d1fae5] text-[#059669]" },
+};
+
 export type NoteCardItem = {
   id: string;
   body: string;
   quoteText: string | null;
   locationInfo: string | null;
   actionItems: string | null;
+  actionStatus: ActionStatus;
   importance: number;
   createdAt: string;
   book: { id: string; title: string; author: string } | null;
@@ -51,11 +60,17 @@ function NoteCard({
         {note.body}
       </p>
       {note.actionItems && (
-        <div className="mt-2 flex items-center gap-1 text-[11px] text-[#d4a017]">
+        <div className="mt-2 flex items-center gap-1.5 text-[11px] text-[#d4a017]">
           <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" d="m3.75 13.5 10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75Z" />
           </svg>
-          アクションあり
+          {note.actionStatus && actionStatusConfig[note.actionStatus] ? (
+            <span className={`px-1.5 py-0.5 rounded-full text-[10px] font-medium ${actionStatusConfig[note.actionStatus].class}`}>
+              {actionStatusConfig[note.actionStatus].label}
+            </span>
+          ) : (
+            "アクションあり"
+          )}
         </div>
       )}
     </button>
@@ -141,7 +156,14 @@ export function NoteDetailView({
         {/* Action items */}
         {note.actionItems && (
           <section className="bg-[#fefce8] rounded-xl p-4">
-            <p className="text-[10px] font-semibold text-[#d4a017] uppercase tracking-[0.1em] mb-2">Next Action</p>
+            <div className="flex items-center gap-2 mb-2">
+              <p className="text-[10px] font-semibold text-[#d4a017] uppercase tracking-[0.1em]">Next Action</p>
+              {note.actionStatus && actionStatusConfig[note.actionStatus] && (
+                <span className={`px-2 py-0.5 rounded-full text-[10px] font-medium ${actionStatusConfig[note.actionStatus].class}`}>
+                  {actionStatusConfig[note.actionStatus].label}
+                </span>
+              )}
+            </div>
             <p className="text-[14px] text-[#1a1a1a] leading-[1.9] whitespace-pre-wrap">
               {note.actionItems}
             </p>

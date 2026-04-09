@@ -18,6 +18,12 @@ enum BookFormat {
   AUDIOBOOK
 }
 
+enum ActionStatus {
+  NOT_STARTED
+  IN_PROGRESS
+  DONE
+}
+
 model User {
   id            Int        @id @default(autoincrement())
   email         String     @unique
@@ -63,8 +69,9 @@ model Note {
   body        String
   quoteText   String?
   locationInfo String?
-  actionItems String?
-  importance  Int      @default(0)
+  actionItems  String?
+  actionStatus ActionStatus  @default(NOT_STARTED)
+  importance   Int      @default(0)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 

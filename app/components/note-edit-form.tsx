@@ -13,6 +13,7 @@ type NoteData = {
   quoteText: string | null;
   locationInfo: string | null;
   actionItems: string | null;
+  actionStatus: string | null;
   importance: number;
 };
 
@@ -31,6 +32,7 @@ export function NoteEditForm({
   const updateWithId = updateNote.bind(null, note.id);
   const [state, action, pending] = useActionState(updateWithId, undefined);
   const [importance, setImportance] = useState(note.importance);
+  const [actionStatus, setActionStatus] = useState(note.actionStatus ?? "NOT_STARTED");
 
   useEffect(() => {
     if (state?.success) {
@@ -54,6 +56,7 @@ export function NoteEditForm({
     <div className="max-w-lg mx-auto">
       <form action={action} className="space-y-5">
         <input type="hidden" name="importance" value={importance} />
+        <input type="hidden" name="actionStatus" value={actionStatus} />
         <div>
           <label htmlFor="bookId" className="block text-xs text-[#8c7e6a]">
             本
@@ -130,6 +133,30 @@ export function NoteEditForm({
             placeholder="この学びから試したいこと..."
             className={inputClass + " resize-none"}
           />
+        </div>
+
+        <div>
+          <label className="block text-xs text-[#8c7e6a] mb-1">ステータス</label>
+          <div className="flex gap-1.5">
+            {[
+              { value: "NOT_STARTED", label: "未着手" },
+              { value: "IN_PROGRESS", label: "実行中" },
+              { value: "DONE", label: "完了" },
+            ].map((opt) => (
+              <button
+                key={opt.value}
+                type="button"
+                onClick={() => setActionStatus(opt.value)}
+                className={`px-3 py-1.5 text-xs rounded-full transition-colors ${
+                  actionStatus === opt.value
+                    ? "bg-[#2c2416] text-[#f5f0e8]"
+                    : "text-[#8c7e6a] bg-[#f3f4f6] hover:bg-[#e5e7eb]"
+                }`}
+              >
+                {opt.label}
+              </button>
+            ))}
+          </div>
         </div>
 
         <div>

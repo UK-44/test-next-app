@@ -42,6 +42,7 @@ export default async function BookDetailPage({
         quoteText: n.quoteText,
         locationInfo: n.locationInfo,
         actionItems: n.actionItems,
+        actionStatus: n.actionStatus,
         importance: n.importance,
         createdAt: n.createdAt.toISOString(),
         book: null,

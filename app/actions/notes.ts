@@ -14,6 +14,7 @@ export async function createNote(state: FormState, formData: FormData): Promise<
     quoteText: formData.get("quoteText"),
     locationInfo: formData.get("locationInfo"),
     actionItems: formData.get("actionItems"),
+    actionStatus: formData.get("actionStatus"),
     importance: formData.get("importance"),
   });
 
@@ -22,7 +23,6 @@ export async function createNote(state: FormState, formData: FormData): Promise<
   }
 
   const data = validatedFields.data;
-
   const note = await prisma.note.create({
     data: {
       userId: user.id,
@@ -31,6 +31,7 @@ export async function createNote(state: FormState, formData: FormData): Promise<
       quoteText: data.quoteText || null,
       locationInfo: data.locationInfo || null,
       actionItems: data.actionItems || null,
+      actionStatus: (data.actionStatus || "NOT_STARTED") as "NOT_STARTED" | "IN_PROGRESS" | "DONE",
       importance: data.importance ?? 0,
     },
   });
@@ -60,6 +61,7 @@ export async function updateNote(
     quoteText: formData.get("quoteText"),
     locationInfo: formData.get("locationInfo"),
     actionItems: formData.get("actionItems"),
+    actionStatus: formData.get("actionStatus"),
     importance: formData.get("importance"),
   });
 
@@ -68,16 +70,20 @@ export async function updateNote(
   }
 
   const data = validatedFields.data;
-
   await prisma.note.update({
     where: { id: noteId },
     data: {
-      bookId: data.bookId || null,
       body: data.body,
       quoteText: data.quoteText || null,
       locationInfo: data.locationInfo || null,
       actionItems: data.actionItems || null,
+      actionStatus: (data.actionStatus || "NOT_STARTED") as "NOT_STARTED" | "IN_PROGRESS" | "DONE",
       importance: data.importance ?? 0,
+      book: data.bookId
+        ? { connect: { id: data.bookId } }
+        : note.bookId
+          ? { disconnect: true }
+          : undefined,
     },
   });
 

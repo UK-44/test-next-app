@@ -44,6 +44,7 @@ export default async function NoteDetailPage({
           quoteText: note.quoteText,
           locationInfo: note.locationInfo,
           actionItems: note.actionItems,
+          actionStatus: note.actionStatus,
           importance: note.importance,
         }}
         books={books}
