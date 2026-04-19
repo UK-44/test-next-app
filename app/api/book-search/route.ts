@@ -5,22 +5,16 @@ const SearchSchema = z.object({
   query: z.string().min(1, "検索キーワードを入力してください。").max(200),
 });
 
-interface GoogleBooksVolume {
-  volumeInfo: {
-    title?: string;
-    authors?: string[];
-    publisher?: string;
-    publishedDate?: string;
-    description?: string;
-    imageLinks?: {
-      thumbnail?: string;
-      smallThumbnail?: string;
-    };
-    industryIdentifiers?: Array<{
-      type: string;
-      identifier: string;
-    }>;
-  };
+interface RakutenBooksItem {
+  title?: string;
+  author?: string;
+  publisherName?: string;
+  isbn?: string;
+  itemCaption?: string;
+  largeImageUrl?: string;
+  mediumImageUrl?: string;
+  smallImageUrl?: string;
+  salesDate?: string;
 }
 
 export async function POST(request: Request) {
@@ -39,8 +33,20 @@ export async function POST(request: Request) {
   }
 
   try {
-    const apiKey = process.env.GOOGLE_BOOKS_API_KEY;
-    const url = `https://www.googleapis.com/books/v1/volumes?q=intitle:${encodeURIComponent(parsed.data.query)}&maxResults=5&langRestrict=ja${apiKey ? `&key=${apiKey}` : ""}`;
+    const appId = process.env.RAKUTEN_APP_ID;
+    if (!appId) {
+      return Response.json(
+        { error: "楽天APIのアプリケーションIDが設定されていません。" },
+        { status: 500 }
+      );
+    }
+
+    const params = new URLSearchParams({
+      applicationId: appId,
+      title: parsed.data.query,
+      hits: "5",
+    });
+    const url = `https://app.rakuten.co.jp/services/api/BooksBook/Search/20170404?${params}`;
 
     let res: Response | null = null;
     for (let attempt = 0; attempt < 3; attempt++) {
@@ -51,41 +57,29 @@ export async function POST(request: Request) {
 
     if (!res || !res.ok) {
       const text = await res?.text().catch(() => "") ?? "";
-      console.error("Google Books API error:", res?.status, text);
+      console.error("Rakuten Books API error:", res?.status, text);
       return Response.json(
-        { error: `Google Books APIへのリクエストに失敗しました。(${res?.status})` },
+        { error: `楽天ブックスAPIへのリクエストに失敗しました。(${res?.status})` },
         { status: 502 }
       );
     }
 
     const data = await res.json();
-    if (!data.items || data.items.length === 0) {
+    if (!data.Items || data.Items.length === 0) {
       return Response.json({ results: [] });
     }
 
-    const results = (data.items as GoogleBooksVolume[]).map((vol) => {
-      const info = vol.volumeInfo;
-      const isbn =
-        info.industryIdentifiers?.find((id) => id.type === "ISBN_13")?.identifier ??
-        info.industryIdentifiers?.find((id) => id.type === "ISBN_10")?.identifier ??
-        "";
-
-      let coverImageUrl =
-        info.imageLinks?.thumbnail ?? info.imageLinks?.smallThumbnail ?? null;
-      if (coverImageUrl) {
-        coverImageUrl = coverImageUrl
-          .replace("zoom=1", "zoom=3")
-          .replace(/^http:/, "https:");
-      }
+    const results = (data.Items as { Item: RakutenBooksItem }[]).map(({ Item: item }) => {
+      const coverImageUrl = item.largeImageUrl || item.mediumImageUrl || item.smallImageUrl || null;
 
       return {
-        title: info.title ?? "",
-        author: info.authors?.join(", ") ?? "",
+        title: item.title ?? "",
+        author: item.author ?? "",
         coverImageUrl,
-        identifier: isbn,
-        publisher: info.publisher ?? "",
-        publishedAt: info.publishedDate ?? "",
-        description: (info.description ?? "").substring(0, 500),
+        identifier: item.isbn ?? "",
+        publisher: item.publisherName ?? "",
+        publishedAt: item.salesDate ?? "",
+        description: (item.itemCaption ?? "").substring(0, 500),
       };
     });
 
