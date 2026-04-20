@@ -35,7 +35,8 @@ export async function POST(request: Request) {
   try {
     const appId = process.env.RAKUTEN_APP_ID;
     const accessKey = process.env.RAKUTEN_ACCESS_KEY;
-    if (!appId || !accessKey) {
+    const appUrl = process.env.RAKUTEN_APP_URL;
+    if (!appId || !accessKey || !appUrl) {
       return Response.json(
         { error: "楽天APIの認証情報が設定されていません。" },
         { status: 500 }
@@ -49,10 +50,17 @@ export async function POST(request: Request) {
       hits: "5",
     });
     const url = `https://openapi.rakuten.co.jp/services/api/BooksBook/Search/20170404?${params}`;
+    const origin = new URL(appUrl).origin;
 
     let res: Response | null = null;
     for (let attempt = 0; attempt < 3; attempt++) {
-      res = await fetch(url, { cache: "no-store" });
+      res = await fetch(url, {
+        cache: "no-store",
+        headers: {
+          Referer: appUrl,
+          Origin: origin,
+        },
+      });
       if (res.status !== 429) break;
       await new Promise((r) => setTimeout(r, 1000 * (attempt + 1)));
     }

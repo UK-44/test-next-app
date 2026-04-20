@@ -22,7 +22,7 @@ function NoteCard({
     >
       <div className="flex items-center gap-2 mb-2">
         <span className="text-[11px] text-[#9ca3af]">
-          {new Date(note.createdAt).toLocaleDateString("ja-JP", { year: "numeric", month: "2-digit", day: "2-digit" }).replace(/\//g, ".")}
+          {new Date(note.createdAt).toLocaleDateString("ja-JP", { year: "numeric", month: "2-digit", day: "2-digit", timeZone: "Asia/Tokyo" }).replace(/\//g, ".")}
         </span>
         {note.importance > 0 && (
           <span className="text-xs text-[#d4a017]">
