@@ -34,7 +34,8 @@ export async function POST(request: Request) {
 
   try {
     const appId = process.env.RAKUTEN_APP_ID;
-    if (!appId) {
+    const accessKey = process.env.RAKUTEN_ACCESS_KEY;
+    if (!appId || !accessKey) {
       return Response.json(
         { error: "楽天APIの認証情報が設定されていません。" },
         { status: 500 }
@@ -43,6 +44,7 @@ export async function POST(request: Request) {
 
     const params = new URLSearchParams({
       applicationId: appId,
+      accessKey,
       title: parsed.data.query,
       hits: "5",
     });
