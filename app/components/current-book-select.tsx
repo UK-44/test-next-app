@@ -31,7 +31,7 @@ export function CurrentBookSelect({
       <button
         type="submit"
         disabled={pending}
-        className="px-4 py-2.5 text-[13px] font-medium text-white bg-[#1a1a1a] rounded-xl hover:bg-[#374151] transition-colors disabled:opacity-50"
+        className="shrink-0 whitespace-nowrap px-4 py-2.5 text-[13px] font-medium text-white bg-[#1a1a1a] rounded-xl hover:bg-[#374151] transition-colors disabled:opacity-50"
       >
         {pending ? "..." : "設定"}
       </button>

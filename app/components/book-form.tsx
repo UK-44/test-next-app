@@ -101,13 +101,13 @@ export function BookForm() {
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="書籍タイトルを入力..."
-            className="flex-1 px-3 py-2 bg-transparent border-b border-[#e5e7eb] text-sm text-[#2c2416] placeholder-[#b5a898] focus:outline-none focus:border-[#6b5d4d]"
+            className="flex-1 min-w-0 px-3 py-2 bg-transparent border-b border-[#e5e7eb] text-sm text-[#2c2416] placeholder-[#b5a898] focus:outline-none focus:border-[#6b5d4d]"
           />
           <button
             type="button"
             onClick={handleSearch}
             disabled={searching || !searchQuery.trim()}
-            className="px-4 py-2 bg-[#2c2416] text-[#f5f0e8] text-sm rounded hover:bg-[#3d3225] disabled:opacity-50 whitespace-nowrap"
+            className="shrink-0 px-4 py-2 bg-[#2c2416] text-[#f5f0e8] text-sm rounded hover:bg-[#3d3225] disabled:opacity-50 whitespace-nowrap"
           >
             {searching ? "検索中..." : "検索"}
           </button>
